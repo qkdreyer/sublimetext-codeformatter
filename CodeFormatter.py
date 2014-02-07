@@ -35,7 +35,11 @@ cprint = globals()["__builtins__"]["print"]
 
 def plugin_loaded():
 	cprint('CodeFormatter: Plugin Initialized')
-
+	if (sublime.platform() != "windows"):
+		import stat
+		path = sublime.packages_path()+"/CodeFormatter/codeformatter/lib/phpbeautifier/php_beautifier"
+		st = os.stat(path)
+		os.chmod(path, st.st_mode | stat.S_IEXEC)
 
 if st_version == 2:
 	plugin_loaded()
