@@ -9,13 +9,7 @@ import re
 import sublime
 import subprocess
 
-try:
-	# Python 3
-	from .htmlbeautifier import Beautifier
-except (ValueError):
-	# Python 2
-	from htmlbeautifier import Beautifier
-
+import htmlbeautifier
 
 class HtmlFormatter:
 	def __init__(self, formatter):
@@ -23,42 +17,50 @@ class HtmlFormatter:
 
 
 	def format(self, text):
+		text = text.decode("utf-8")
 		opts = self.formatter.settings.get('codeformatter_html_options')
 
 
-		options = []
-		if (opts["indent_size"]):
-			options.append("indent_size:"+str(opts["indent_size"]))
+		stderr = ""
+		stdout = ""
+		options = htmlbeautifier.default_options()
+
+		if ("indent_size" in opts and opts["indent_size"]):
+			options.indent_size = opts["indent_size"]
 		else:
-			options.append("indent_size:1")
+			options.indent_size = 4
 
-		if (opts["indent_with_tabs"]):
-			options.append("indent_char:	")
+
+		if ("indent_char" in opts and opts["indent_char"]):
+			options.indent_char = str(opts["indent_char"])
 		else:
-			options.append("indent_char: ")
+			options.indent_char = "	"
 
-		if (opts["max_char"]):
-			options.append("max_char:"+str(opts["max_char"]))
+		if ("indent_with_tabs" in opts and opts["indent_with_tabs"]):
+			options.indent_with_tabs = True
 		else:
-			options.append("max_char:70")
+			options.indent_with_tabs = False
 
-		if (opts["brace_style"]):
-			options.append("brace_style:"+str(opts["brace_style"]))
+		if ("preserve_newlines" in opts and opts["preserve_newlines"]):
+			options.preserve_newlines = True
 		else:
-			options.append("brace_style:collapse")
+			options.preserve_newlines = False
 
-		if (opts["unformatted"]):
-			unformatted = "|".join(opts["unformatted"])
-			options.append("unformatted:"+unformatted)
+		if ("max_preserve_newlines" in opts and opts["max_preserve_newlines"]):
+			options.max_preserve_newlines = opts["max_preserve_newlines"]
+		else:
+			options.max_preserve_newlines = 10
 
+		if ("indent_tags" in opts and opts["indent_tags"]):
+			options.indent_tags = str(opts["indent_tags"])
 
+		try:
+ 		 	stdout = htmlbeautifier.beautify(text, options)
+		except Exception as e:
+		 	stderr = str(e)
 
-		options = ";".join(options)
-
-		beautifier = Beautifier(self.formatter)
-		stdout, stderr = beautifier.beautify(text, options);
+		if (not stderr and not stdout):
+			stderr = "Formatting error!"
 
 		return stdout, stderr
-
-
 

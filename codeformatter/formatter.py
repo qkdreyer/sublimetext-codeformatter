@@ -3,8 +3,13 @@
 # @link 			http://long.ge
 # @license 		GNU General Public License version 2 or later;
 
-import sublime
-import re
+import os, sys, re, sublime
+
+directory = os.path.dirname(os.path.realpath(__file__))
+libs_path = os.path.join(directory, "lib")
+
+if libs_path not in sys.path:
+	sys.path.append(libs_path)
 
 try:
 	# Python 3
@@ -34,7 +39,9 @@ class Formatter:
 			'css': CssFormatter,
 			'python': PyFormatter
 		}
-
+		self.st_version = 2
+		if sublime.version() == '' or int(sublime.version()) > 3000:
+			self.st_version = 3
 
 		self.syntax_file = view.settings().get('syntax')
 		self.syntax = self.getSyntax()
@@ -43,6 +50,7 @@ class Formatter:
 		self.packages_path = sublime.packages_path()
 
 	def format(self, text):
+
 		try:
 			formatter = self.classmap[self.syntax](self)
 		except Exception as e:
@@ -76,8 +84,7 @@ class Formatter:
 		return found.lower()
 
 	def clean(self, string):
-		try:
-			text = re.sub(r'\r\n|\r', '\n', string.decode('utf-8'))
-		except AttributeError as e:
-			text = re.sub(r'\r\n|\r', '\n', string)
-		return text
+		if hasattr(string, 'decode'):
+			string = string.decode('UTF-8', 'ignore')
+
+		return re.sub(r'\r\n|\r', '\n', string)
